@@ -1,4 +1,5 @@
 import { PricingFormData } from '../types';
+import axios from 'axios';
 import { referralFees, weightHandlingFees, closingFees, otherFees } from '../data/fees';
 
 export const calculateReferralFee = (category: string, price: number): number => {
@@ -109,21 +110,15 @@ export const calculatePickAndPackFee = (mode: string, size: string): number => {
   return size === 'Standard' ? otherFees.pickAndPack.standard : otherFees.pickAndPack.oversizeHeavyBulky;
 };
 
-export const calculateTotalFees = (data: PricingFormData) => {
-  const referralFee = calculateReferralFee(data.productCategory, data.sellingPrice);
-  const weightHandlingFee = calculateWeightHandlingFee(
-    data.shippingMode,
-    data.weight,
-    data.serviceLevel,
-    data.location,
-    data.productSize
-  );
-  const closingFee = calculateClosingFee(data.shippingMode, data.sellingPrice);
-  const pickAndPackFee = calculatePickAndPackFee(data.shippingMode, data.productSize);
+export const calculateTotalFees = async (data: PricingFormData) => {
   
-  const totalFees = referralFee + weightHandlingFee + closingFee + pickAndPackFee;
-  const netEarnings = data.sellingPrice - totalFees;
-  
+  const totalFee=await axios.post('http://localhost:3000/api/v1/profitability-calculator',data)
+
+  const {breakdown,totalFees,netEarnings}=totalFee.data
+  const referralFee=breakdown.referralFee
+  const closingFee=breakdown.closingFee
+  const pickAndPackFee=breakdown.otherFee
+  const weightHandlingFee=0;
   return {
     referralFee,
     weightHandlingFee,
